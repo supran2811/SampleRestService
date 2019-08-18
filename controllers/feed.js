@@ -1,4 +1,5 @@
 const Post = require('../models/post');
+const User = require('../models/user');
 
 const fs = require('fs');
 const path = require('path');
@@ -56,11 +57,17 @@ exports.createPost = async (req, res, next) => {
   const content = req.body.content;
   const imageUrl = req.file ? req.file.path : req.body.image ;
   let post;
+  const user = await User.findById(req.userId);
   if(postId) {
     //// Update post
     post = await Post.findById(postId);
+
     if(!post) {
       throw new Error('No Post found').statusCode = 422;
+    }
+
+    if(post.creator.toString() !== req.userId.toString()) {
+      throw new Error('Operation not allowed!!!').statusCode = 403;
     }
     if(!req.body.image) {
       clearImage(post.imageUrl);
@@ -68,8 +75,8 @@ exports.createPost = async (req, res, next) => {
     
     post.title = title;
     post.content = content;
-    post.imageUrl = imageUrl  ;
-   
+    post.imageUrl = imageUrl;
+
   }
   else {
     /// Create new post
@@ -78,14 +85,19 @@ exports.createPost = async (req, res, next) => {
       title,
       content,
       imageUrl,
-      creator:'Supran'
+      creator:req.userId
     });
+    user.posts.push(post);    
+    await user.save();
   }
+  
+
   const result = await post.save();
     // Create/Update post in db
     res.status(201).json({
       message: 'Post created / updated successfully!',
-      post: result
+      post: result,
+      creator: {userId: user._id , name: user.name}
     });
   } catch(error) {
     if(!error.statusCode) {
@@ -103,7 +115,13 @@ exports.deletePost = async (req,res,next) => {
       throw new Error('No Post found').statusCode = 422;
     }
    
+  if(post.creator.toString() !== req.userId.toString()) {
+      throw new Error('Operation not allowed!!!').statusCode = 403;
+    }
    const result = await Post.findByIdAndRemove(req.params.postId);
+   const user = await User.findById(req.userId);
+   user.posts.pull(post._id);
+   await user.save();
    clearImage(post.imageUrl);
    res.status(202).json({message: 'Content Deleted!!'});
   } catch(error) { 

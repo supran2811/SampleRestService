@@ -5,7 +5,8 @@ const mongoose = require('mongoose');
 const multer = require('multer');
 const uniqid = require('uniqid');
 const feedRoutes = require('./routes/feed');
-
+const authRoutes = require('./routes/auth');
+const userRoutes = require('./routes/user');
 const app = express();
 
 const  storage = multer.diskStorage({
@@ -35,6 +36,8 @@ app.use((req, res, next) => {
 });
 
 app.use('/feed', feedRoutes);
+app.use('/user',userRoutes);
+app.use(authRoutes);
 
 app.use((error , req, res, next) => {
     console.log('Error coming herer',error);
