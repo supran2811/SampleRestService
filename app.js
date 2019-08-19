@@ -4,9 +4,7 @@ const path = require('path');
 const mongoose = require('mongoose');
 const multer = require('multer');
 const uniqid = require('uniqid');
-const feedRoutes = require('./routes/feed');
-const authRoutes = require('./routes/auth');
-const userRoutes = require('./routes/user');
+
 const app = express();
 
 const  storage = multer.diskStorage({
@@ -35,10 +33,6 @@ app.use((req, res, next) => {
     next();
 });
 
-app.use('/feed', feedRoutes);
-app.use('/user',userRoutes);
-app.use(authRoutes);
-
 app.use((error , req, res, next) => {
     console.log('Error coming herer',error);
     const statusCode  = error.statusCode || 500;
@@ -49,11 +43,7 @@ app.use((error , req, res, next) => {
 
 mongoose.connect('mongodb+srv://supran:1234@supran-cluster0-zzni5.mongodb.net/feeds?retryWrites=true&w=majority')
 .then(result => {
-   const server =  app.listen(8080);
-   const io = require('./socket').init(server);
-   io.on('connection' , (socket) => {
-     console.log('client connected!!!');
-   })
+    app.listen(8080);
 })
 .catch(error => {
     console.log('Error is thrown ',error);
