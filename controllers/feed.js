@@ -1,6 +1,6 @@
 const Post = require('../models/post');
 const User = require('../models/user');
-
+const socket = require('../socket');
 const fs = require('fs');
 const path = require('path');
 const { validationResult } = require('express-validator');
@@ -10,7 +10,7 @@ exports.getPosts = async (req, res, next) => {
   const perPage = 2;
   try {
     const totalItems = await Post.countDocuments();
-    const posts = await Post.find().skip((currentPage-1)*perPage).limit(perPage);
+    const posts = await Post.find().populate('creator').sort({createdAt:-1}).skip((currentPage-1)*perPage).limit(perPage);
     res.status(200).json({posts , totalItems});
   } catch(error) {
     if(!error.statusCode) {
@@ -56,17 +56,18 @@ exports.createPost = async (req, res, next) => {
   const title = req.body.title;
   const content = req.body.content;
   const imageUrl = req.file ? req.file.path : req.body.image ;
-  let post;
+  
+  let post,result;
   const user = await User.findById(req.userId);
   if(postId) {
     //// Update post
-    post = await Post.findById(postId);
+    post = await Post.findById(postId).populate('creator');
 
     if(!post) {
       throw new Error('No Post found').statusCode = 422;
     }
 
-    if(post.creator.toString() !== req.userId.toString()) {
+    if(post.creator._id.toString() !== req.userId.toString()) {
       throw new Error('Operation not allowed!!!').statusCode = 403;
     }
     if(!req.body.image) {
@@ -76,7 +77,9 @@ exports.createPost = async (req, res, next) => {
     post.title = title;
     post.content = content;
     post.imageUrl = imageUrl;
-
+    
+   result = await post.save();
+  socket.getIO().emit('post', {action:'update' , post});
   }
   else {
     /// Create new post
@@ -89,10 +92,15 @@ exports.createPost = async (req, res, next) => {
     });
     user.posts.push(post);    
     await user.save();
+    
+   result = await post.save();
+  socket.getIO().emit('post', {action:'create' , post:{ ...post._doc , creator:{
+    _id:req.userId , name:user.name
+  }}});
   }
   
 
-  const result = await post.save();
+
     // Create/Update post in db
     res.status(201).json({
       message: 'Post created / updated successfully!',
@@ -123,6 +131,7 @@ exports.deletePost = async (req,res,next) => {
    user.posts.pull(post._id);
    await user.save();
    clearImage(post.imageUrl);
+   socket.getIO().emit('post' , {action:'delete'});
    res.status(202).json({message: 'Content Deleted!!'});
   } catch(error) { 
     if(!error.statusCode) {

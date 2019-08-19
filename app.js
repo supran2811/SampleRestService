@@ -49,7 +49,11 @@ app.use((error , req, res, next) => {
 
 mongoose.connect('mongodb+srv://supran:1234@supran-cluster0-zzni5.mongodb.net/feeds?retryWrites=true&w=majority')
 .then(result => {
-    app.listen(8080);
+   const server =  app.listen(8080);
+   const io = require('./socket').init(server);
+   io.on('connection' , (socket) => {
+     console.log('client connected!!!');
+   })
 })
 .catch(error => {
     console.log('Error is thrown ',error);
