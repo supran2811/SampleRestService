@@ -4,6 +4,9 @@ const path = require('path');
 const mongoose = require('mongoose');
 const multer = require('multer');
 const uniqid = require('uniqid');
+const graphQlHttp = require('express-graphql');
+const schema = require('./graphql/schema');
+const resolver = require('./graphql/resolver');
 
 const app = express();
 
@@ -32,6 +35,23 @@ app.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     next();
 });
+
+app.use('/graphql' , graphQlHttp({
+  schema:schema,
+  rootValue:resolver,
+  graphiql:true,
+  formatError(err) {
+    if(!err.originalError) {
+      return err;
+    }
+
+    return {
+      message : err.originalError.message,
+      data: err.originalError.data,
+      code: err.originalError.code
+    }
+  }
+}));
 
 app.use((error , req, res, next) => {
     console.log('Error coming herer',error);
