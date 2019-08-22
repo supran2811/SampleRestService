@@ -7,6 +7,7 @@ const uniqid = require('uniqid');
 const graphQlHttp = require('express-graphql');
 const schema = require('./graphql/schema');
 const resolver = require('./graphql/resolver');
+const auth = require('./middlewares/auth');
 
 const app = express();
 
@@ -36,19 +37,21 @@ app.use((req, res, next) => {
     next();
 });
 
+app.use(auth);
+
 app.use('/graphql' , graphQlHttp({
   schema:schema,
   rootValue:resolver,
   graphiql:true,
-  formatError(err) {
+  customFormatErrorFn(err) {
     if(!err.originalError) {
       return err;
     }
 
     return {
       message : err.originalError.message,
-      data: err.originalError.data,
-      code: err.originalError.code
+      status: err.originalError.code,
+      data: err.originalError.data
     }
   }
 }));
