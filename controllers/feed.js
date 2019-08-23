@@ -79,7 +79,6 @@ exports.createPost = async (req, res, next) => {
     post.imageUrl = imageUrl;
     
    result = await post.save();
-  socket.getIO().emit('post', {action:'update' , post});
   }
   else {
     /// Create new post
@@ -91,12 +90,7 @@ exports.createPost = async (req, res, next) => {
       creator:req.userId
     });
     user.posts.push(post);    
-    await user.save();
-    
-   result = await post.save();
-  socket.getIO().emit('post', {action:'create' , post:{ ...post._doc , creator:{
-    _id:req.userId , name:user.name
-  }}});
+    result = await post.save();
   }
   
 

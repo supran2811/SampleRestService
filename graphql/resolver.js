@@ -4,6 +4,8 @@ const validator = require('validator');
 
 const User = require('../models/user');
 
+const Post = require('../models/post');
+
 module.exports = {
    createUser: async function({userInput: {email,password,name}}) {
        const existingUser = await User.findOne({email});
@@ -99,19 +101,19 @@ module.exports = {
             error.code = 422;
             throw error;
         }
+        try {
 
         const user = await User.findById(req.userId);
 
-        post = new Post({
+        const post = new Post({
             title,
             content,
             imageUrl,
-            creator:req.userId
+            creator:user
           });
-          user.posts.push(post);    
+          user.posts.push(post); 
           await user.save();
-          
-         result = await post.save();
+          result = await post.save();
 
          return {
              ...result._doc,
@@ -119,6 +121,33 @@ module.exports = {
              createdAt: result.createdAt.toISOString(),
              updatedAt: result.updatedAt.toISOString()
          }
- 
+        } catch(error) {
+            console.log('Error while saving',error);
+            throw error;
+        }
+   },
+
+   getPosts: async function({ page } , req) {
+    // if(!req.isAuth) {
+    //     const error = new Error('User is not authenticated');
+    //    error.code = 403;
+    //    throw error;
+    // }
+    try {
+        const perPage = 2;
+        const totalItems = await Post.countDocuments();
+        const posts = await Post.find().populate('creator').sort({createdAt:-1}).skip((page-1)*perPage).limit(perPage);;
+        return {posts : posts.map(post =>  ({
+                ...post._doc ,
+                 _id:post._id.toString() , 
+                 createdAt:post.createdAt.toISOString() , 
+                 updatedAt: post.updatedAt.toISOString()
+                })  
+            ) , totalItems};
+    } catch(error) {
+        console.log("Error thrown while fetching post!",error);
+        throw error;
+    }
+
    }
 }
