@@ -1,5 +1,6 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const fs  = require('fs');
 const path = require('path');
 const mongoose = require('mongoose');
 const multer = require('multer');
@@ -39,11 +40,28 @@ app.use((req, res, next) => {
 
 app.use(auth);
 
+app.use('/uploadImage' , (req,res,next) => {
+  if(!req.isAuth) {
+    throw new Error('Not authenticated!').status = 403;
+  }
+  if(!req.file) {
+    return res.status(200).json({message:'No image file exist'});
+  }
+
+  if(req.body.oldImageUrl) {
+    clearImage(req.body.oldImageUrl);
+  }
+  
+  return res.status(201).json({message:'Image Uploaded', path: req.file.path});
+   
+});
+
 app.use('/graphql' , graphQlHttp({
   schema:schema,
   rootValue:resolver,
   graphiql:true,
   customFormatErrorFn(err) {
+    console.log("Error is thrown from graph",err, err.originalError);
     if(!err.originalError) {
       return err;
     }
@@ -71,3 +89,14 @@ mongoose.connect('mongodb+srv://supran:1234@supran-cluster0-zzni5.mongodb.net/fe
 .catch(error => {
     console.log('Error is thrown ',error);
 });
+
+
+const  clearImage = (filePath) => {
+
+  const fileToDelete = path.join(__dirname ,  filePath);
+  fs.unlink(fileToDelete, (err) => {
+    if (err) {
+        throw err;
+    }
+})
+}

@@ -1,7 +1,6 @@
 const jwt = require('jsonwebtoken');
 
 module.exports = (req,res,next) => {
-    console.log('Request',req.body);
     const token = req.get('Authorization');
     if(!token) {
         req.isAuth = false;

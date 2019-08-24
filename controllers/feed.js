@@ -125,7 +125,6 @@ exports.deletePost = async (req,res,next) => {
    user.posts.pull(post._id);
    await user.save();
    clearImage(post.imageUrl);
-   socket.getIO().emit('post' , {action:'delete'});
    res.status(202).json({message: 'Content Deleted!!'});
   } catch(error) { 
     if(!error.statusCode) {
