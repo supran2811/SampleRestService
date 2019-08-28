@@ -23,7 +23,7 @@ exports.createUser  = async (req,res,next) => {
 
         await user.save();
 
-        res.status(201).json({message: 'User Created Sucessfully!!'});
+        return res.status(201).json({message: 'User Created Sucessfully!!'});
 
 
     } catch(error) {
@@ -31,6 +31,7 @@ exports.createUser  = async (req,res,next) => {
             error.statusCode = 500;
         }
         next(error);
+        return error;
     }
 }
 
@@ -58,11 +59,12 @@ exports.loginUser = async (req,res,next) => {
         "supersecretsecretkey",{
             expiresIn:'1h'
         });
-        res.status(200).json({token,userId:user._id.toString()});
+        return res.status(200).json({token,userId:user._id.toString()});
     } catch(error) {
         if(!error.statusCode) {
             error.statusCode = 500;
         }
         next(error);
+        return error;
     }
 }

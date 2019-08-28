@@ -47,14 +47,78 @@ app.use((error , req, res, next) => {
     res.status(statusCode).json({message});
 })
 
-mongoose.connect('mongodb+srv://supran:1234@supran-cluster0-zzni5.mongodb.net/feeds?retryWrites=true&w=majority')
-.then(result => {
-   const server =  app.listen(8080);
-   const io = require('./socket').init(server);
-   io.on('connection' , (socket) => {
-     console.log('client connected!!!');
-   })
-})
-.catch(error => {
-    console.log('Error is thrown ',error);
-});
+// mongoose.connect('mongodb+srv://supran:1234@supran-cluster0-zzni5.mongodb.net/feeds?retryWrites=true&w=majority')
+// .then(result => {
+//    const server =  app.listen(8080);
+//    const io = require('./socket').init(server);
+//    io.on('connection' , (socket) => {
+//      console.log('client connected!!!');
+//    })
+// })
+// .catch(error => {
+//     console.log('Error is thrown ',error);
+// });
+
+const array = [
+  {
+  "name": "Ashutosh",
+  "address": "Somehwere in pune"
+  },
+  {
+  "name": "Roopak",
+  "phone": "888888888"
+  }
+  
+ ]
+
+console.log(createCSV(array));
+function createCSV(inputElements) {
+    
+  let csvData = ""
+  let csvHeaderArray = [];
+  
+  for(const inputElem of inputElements) {
+     
+     let elementArray = [];
+      
+     for(let key in inputElem ) {
+        let index = csvHeaderArray.findIndex(header => header === key);
+        
+        if(index >= 0) {
+           if(elementArray.length > index){
+                 elementArray[index] =  inputElem[key];
+           }
+           else {
+             for(let i=0; i< index ;i++){
+               elementArray.push("");
+             }
+             elementArray.push(inputElem[key]);
+           }
+        }         
+        else {
+          for(let i=0; i< csvHeaderArray.length ;i++){
+            elementArray.push("");
+          }
+        csvHeaderArray.push(key);
+        
+        elementArray.push(inputElem [key]);
+        }         
+     }
+     for(let val of elementArray) {
+       csvData = csvData + val + ","
+     }
+     
+     csvData = csvData + "/n";
+     
+     
+     
+  } 
+  let csvHeader = "";
+    
+  for(let d of csvHeaderArray){
+   csvHeader =csvHeader + d + ","
+  }
+  
+  return csvHeader + "/n" + csvData;
+
+}

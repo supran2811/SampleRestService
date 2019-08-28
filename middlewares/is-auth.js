@@ -4,7 +4,10 @@ module.exports = (req,res,next) => {
     console.log('Request',req.body);
     const token = req.get('Authorization');
     if(!token) {
-        throw new Error('No authorization key').statusCode = 401;
+        // throw new Error('No authorization key').statusCode = 401;
+        const error = new Error("User is not authorised!");
+        error.statusCode = 401;
+        throw error;
     }
     let decodedToken;
     try {
