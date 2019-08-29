@@ -79,7 +79,7 @@ exports.createPost = async (req, res, next) => {
     post.imageUrl = imageUrl;
     
    result = await post.save();
-  socket.getIO().emit('post', {action:'update' , post});
+  // socket.getIO().emit('post', {action:'update' , post});
   }
   else {
     /// Create new post
@@ -94,15 +94,12 @@ exports.createPost = async (req, res, next) => {
     await user.save();
     
    result = await post.save();
-  socket.getIO().emit('post', {action:'create' , post:{ ...post._doc , creator:{
-    _id:req.userId , name:user.name
-  }}});
+  // socket.getIO().emit('post', {action:'create' , post:{ ...post._doc , creator:{
+  //   _id:req.userId , name:user.name
+  // }}});
   }
-  
-
-
-    // Create/Update post in db
-    res.status(201).json({
+   // Create/Update post in db
+    return res.status(201).json({
       message: 'Post created / updated successfully!',
       post: result,
       creator: {userId: user._id , name: user.name}
@@ -112,6 +109,7 @@ exports.createPost = async (req, res, next) => {
         error.statusCode = 500;
     }
     next(error);
+    return error;
   };
 };
 
